@@ -1,18 +1,47 @@
-import { useEffect } from "react";
-import axios from "axios";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { AuthProvider } from "./context/AuthContext";
+import { ProtectedRoute } from "./components/ProtectedRoute";
+import { Login } from "./pages/Login";
+import { Register } from "./pages/Register";
+import { Cart } from "./pages/Cart";
+import { Orders } from "./pages/Orders";
+import { Profile } from "./pages/Profile";
 
 function App() {
-
-  useEffect(() => {
-    const fetchProducts = async () => {
-      const { data } = await axios.get("http://localhost:5000/");
-      console.log(data);
-    };
-
-    fetchProducts();
-  }, []);
-
-  return <h1>Check console</h1>;
+  return (
+    <BrowserRouter>
+      <AuthProvider>
+        <Routes>
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route
+            path="/cart"
+            element={
+              <ProtectedRoute>
+                <Cart />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/orders"
+            element={
+              <ProtectedRoute>
+                <Orders />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/profile"
+            element={
+              <ProtectedRoute>
+                <Profile />
+              </ProtectedRoute>
+            }
+          />
+        </Routes>
+      </AuthProvider>
+    </BrowserRouter>
+  );
 }
 
 export default App;
