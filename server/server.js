@@ -3,6 +3,10 @@ import cors from "cors";
 import mongoose from "mongoose";
 import dotenv from "dotenv";
 import authRoutes from "./routes/auth.js";
+import productRoutes from "./routes/products.js";
+import cartRoutes from "./routes/cart.js";
+import wishlistRoutes from "./routes/wishlist.js";
+import orderRoutes from "./routes/orders.js";
 import { authMiddleware } from "./middleware/auth.js";
 
 dotenv.config();
@@ -17,23 +21,19 @@ mongoose.connect(process.env.MONGO_URI)
 
 // Auth Routes
 app.use("/api/auth", authRoutes);
+app.use("/api", productRoutes);
+app.use("/api", cartRoutes);
+app.use("/api", wishlistRoutes);
+app.use("/api", orderRoutes);
 
 // Protected Routes Example
-app.get("/api/cart", authMiddleware, (req, res) => {
-  res.json({ message: "Cart data", userId: req.userId });
-});
-
-app.get("/api/orders", authMiddleware, (req, res) => {
-  res.json({ message: "Orders data", userId: req.userId });
-});
-
 app.get("/api/profile", authMiddleware, (req, res) => {
   res.json({ message: "Profile data", userId: req.userId });
 });
 
 // Public Routes
 app.get("/", (req, res) => {
-  res.json([{ name: "Phone", price: 20000 }]);
+  res.json({ ok: true, service: "mern-ecommerce-api" });
 });
 
 // Start server

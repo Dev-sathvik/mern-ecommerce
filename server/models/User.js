@@ -20,6 +20,13 @@ const userSchema = new mongoose.Schema(
       minlength: 6,
       select: false, // Don't return password by default
     },
+    cartItems: [
+      {
+        product: { type: mongoose.Schema.Types.ObjectId, ref: "Product", required: true },
+        qty: { type: Number, required: true, min: 1, default: 1 },
+      },
+    ],
+    wishlist: [{ type: mongoose.Schema.Types.ObjectId, ref: "Product" }],
   },
   { timestamps: true }
 );

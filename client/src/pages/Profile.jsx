@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useAuth } from "../context/AuthContext";
+import { apiRequest } from "../services/apiClient";
 
 export const Profile = () => {
   const { user, token } = useAuth();
@@ -9,10 +10,7 @@ export const Profile = () => {
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const response = await fetch("http://localhost:5000/api/profile", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        const data = await response.json();
+        const data = await apiRequest(`/profile`, { token });
         setProfileData(data);
       } catch (error) {
         console.error("Error fetching profile:", error);
