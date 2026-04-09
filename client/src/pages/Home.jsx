@@ -181,7 +181,12 @@ export function Home() {
                     Stock: {p.countInStock ?? 0}
                   </div>
                   <div style={{ marginTop: 12, display: "flex", gap: 10 }}>
-                    <button onClick={() => navigate(`/products/${p._id}`)}>View details</button>\n                    <button onClick={() => addToCart(p._id)} disabled={addingId === p._id}>\n                      {addingId === p._id ? "Adding..." : "Add to cart"}\n                    </button>\n                    <button onClick={() => toggleWishlist(p._id)}>\n                      {wished ? "Wishlisted" : "Wishlist"}\n                    </button>
+                    <button onClick={() => addToCart(p._id)} disabled={addingId === p._id}>
+                      {addingId === p._id ? "Adding..." : "Add to cart"}
+                    </button>
+                    <button onClick={() => toggleWishlist(p._id)}>
+                      {wished ? "Wishlisted" : "Wishlist"}
+                    </button>
                   </div>
                 </div>
               );
