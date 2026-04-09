@@ -9,6 +9,7 @@ import { Orders } from "./pages/Orders";
 import { Profile } from "./pages/Profile";
 import { Wishlist } from "./pages/Wishlist";
 import { Checkout } from "./pages/Checkout";
+import { ProductDetail } from "./pages/ProductDetail";
 
 function App() {
   return (
@@ -58,6 +59,7 @@ function App() {
               </ProtectedRoute>
             }
           />
+          <Route path="/products/:id" element={<ProductDetail />} />
         </Routes>
       </AuthProvider>
     </BrowserRouter>
@@ -65,3 +67,4 @@ function App() {
 }
 
 export default App;
+
