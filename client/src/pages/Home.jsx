@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from "../context/useAuth";
 import { apiRequest } from "../services/apiClient";
 
 export function Home() {
@@ -181,6 +181,7 @@ export function Home() {
                     Stock: {p.countInStock ?? 0}
                   </div>
                   <div style={{ marginTop: 12, display: "flex", gap: 10 }}>
+                    <button onClick={() => navigate(`/products/${p._id}`)}>View details</button>
                     <button onClick={() => addToCart(p._id)} disabled={addingId === p._id}>
                       {addingId === p._id ? "Adding..." : "Add to cart"}
                     </button>
