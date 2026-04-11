@@ -1,159 +1,206 @@
 # MERN E-Commerce
 
-A starter **MERN (MongoDB, Express, React, Node.js)** e-commerce application with:
+A **MERN (MongoDB, Express, React, Node.js)** e-commerce app with a React + Vite frontend (`client/`) and an Express + Mongoose backend (`server/`).
 
-- A React + Vite frontend (`client/`)
-- An Express + MongoDB backend (`server/`)
+**Included today**
 
-The backend currently exposes a sample products endpoint, and the frontend fetches data from it and logs it in the browser console.
+- User registration and login with **JWT** (passwords hashed with bcrypt)
+- **Product catalog**: list, search, category filter, pagination, sorting (`newest`, `price_asc`, `price_desc`)
+- **Cart** persisted on the user document (add, update quantity, remove, clear)
+- **Wishlist** (toggle per product)
+- **Checkout** with shipping address and **cash on delivery (COD)** orders; order history and details
+
+There is **no admin UI or product seed script** in this repo—you add `Product` documents in MongoDB yourself (for example with [MongoDB Compass](https://www.mongodb.com/products/compass) or a one-off script) so the storefront has items to show.
 
 ---
 
-## Project Structure
+## Project structure
 
 ```text
 mern-ecommerce/
-├── client/   # React (Vite) frontend
-└── server/   # Express + MongoDB backend
+├── client/                 # React (Vite) SPA
+│   └── src/
+│       ├── components/     # e.g. ProtectedRoute
+│       ├── context/        # AuthContext (token + user)
+│       ├── pages/          # Home, Login, Register, Cart, Wishlist, Checkout, Orders, Profile
+│       └── services/       # apiClient, authService
+└── server/
+    ├── middleware/         # JWT authMiddleware
+    ├── models/             # User, Product, Order
+    ├── routes/             # auth, products, cart, wishlist, orders
+    └── server.js
 ```
 
 ---
 
 ## Prerequisites
 
-Before you begin, make sure you have:
-
 - **Node.js** (v18+ recommended)
 - **npm**
-- **MongoDB connection string** (local MongoDB or MongoDB Atlas)
+- **MongoDB** (local or [Atlas](https://www.mongodb.com/cloud/atlas)) and a connection string
 
 ---
 
-## Environment Variables
+## Environment variables
 
-Create a `.env` file inside the `server/` folder:
+### Backend (`server/.env`)
+
+Copy from `server/.env.example`:
 
 ```bash
-# server/.env
-MONGO_URI=your_mongodb_connection_string
+MONGO_URI=mongodb://127.0.0.1:27017/mern-ecommerce
+JWT_SECRET=use_a_long_random_string_in_production
 ```
 
-> Example:
-> `MONGO_URI=mongodb://127.0.0.1:27017/mern-ecommerce`
+`JWT_SECRET` is required for signing and verifying tokens.
+
+### Frontend (`client/.env` — optional)
+
+The client calls the API under `/api` by default. Override the full API base if needed:
+
+```bash
+VITE_API_BASE_URL=http://localhost:5000/api
+```
+
+If unset, the app uses `http://localhost:5000/api` (see `client/src/services/apiClient.js`).
 
 ---
 
 ## Installation
 
-Install dependencies for both server and client.
-
-### 1) Install backend dependencies
-
 ```bash
-cd server
-npm install
-```
-
-### 2) Install frontend dependencies
-
-```bash
-cd ../client
-npm install
+cd server && npm install
+cd ../client && npm install
 ```
 
 ---
 
-## Running the Application
+## Running the app
 
-You need two terminals: one for backend and one for frontend.
+Use two terminals.
 
-### Terminal 1: Start backend
+**Backend** (port **5000**):
 
 ```bash
 cd server
 npm run server
 ```
 
-- Backend runs on: `http://localhost:5000`
-- Alternative command (without nodemon):
+- `npm run server` — nodemon (reload on changes)
+- `npm start` — plain `node server.js`
 
-```bash
-npm start
-```
-
-### Terminal 2: Start frontend
+**Frontend** (Vite default, usually **5173**):
 
 ```bash
 cd client
 npm run dev
 ```
 
-- Frontend runs on: `http://localhost:5173` (default Vite port)
+Open the URL Vite prints (e.g. `http://localhost:5173`). Register a user, add products to MongoDB, then browse the catalog, cart, wishlist, and checkout.
 
 ---
 
-## Available Scripts
+## Scripts
 
-### Backend (`server/`)
-
-- `npm run server` — Start backend with nodemon
-- `npm start` — Start backend with Node.js
-
-### Frontend (`client/`)
-
-- `npm run dev` — Start Vite dev server
-- `npm run build` — Build production assets
-- `npm run preview` — Preview production build locally
-- `npm run lint` — Run ESLint
+| Location   | Command           | Description              |
+| ---------- | ----------------- | ------------------------ |
+| `server/`  | `npm run server`  | API with nodemon         |
+| `server/`  | `npm start`       | API with Node            |
+| `client/`  | `npm run dev`     | Vite dev server          |
+| `client/`  | `npm run build`   | Production build         |
+| `client/`  | `npm run preview` | Preview production build |
+| `client/`  | `npm run lint`    | ESLint                   |
 
 ---
 
-## API
+## API overview
 
-### `GET /`
+Base URL: `http://localhost:5000`
 
-Returns a sample products array.
+- **`GET /`** — Health: `{ ok, service }`
+- **`GET /api/profile`** — Protected; returns a minimal profile payload (example route using `authMiddleware`)
 
-Example response:
+### Auth (`/api/auth`)
 
-```json
-[
-  {
-    "name": "Phone",
-    "price": 20000
-  }
-]
-```
+| Method | Path              | Auth   | Description        |
+| ------ | ----------------- | ------ | ------------------ |
+| POST   | `/api/auth/register` | Public | `{ name, email, password }` → `{ token, user }` |
+| POST   | `/api/auth/login`      | Public | `{ email, password }` → `{ token, user }`       |
+| GET    | `/api/auth/me`         | Bearer | Current user document                           |
 
-Base URL (backend): `http://localhost:5000`
+### Products (public)
+
+| Method | Path                    | Description |
+| ------ | ----------------------- | ----------- |
+| GET    | `/api/products`         | Query: `q`, `category`, `sort` (`newest` \| `price_asc` \| `price_desc`), `page`, `limit` → `{ items, page, limit, total, totalPages }` |
+| GET    | `/api/products/:id`     | Single product |
+| GET    | `/api/categories`       | Distinct categories from products |
+
+### Cart (Bearer token)
+
+| Method | Path                          | Description |
+| ------ | ----------------------------- | ----------- |
+| GET    | `/api/cart`                   | Populated cart + `subtotal` |
+| POST   | `/api/cart/items`             | Body: `{ productId, qty? }` |
+| PATCH  | `/api/cart/items/:productId`  | Body: `{ qty }` |
+| DELETE | `/api/cart/items/:productId`  | Remove line |
+| DELETE | `/api/cart`                   | Clear cart |
+
+### Wishlist (Bearer token)
+
+| Method | Path                       | Description |
+| ------ | -------------------------- | ----------- |
+| GET    | `/api/wishlist`            | List wishlist products |
+| POST   | `/api/wishlist/:productId` | Toggle product on wishlist |
+
+### Orders (Bearer token)
+
+| Method | Path              | Description |
+| ------ | ----------------- | ----------- |
+| POST   | `/api/orders`     | Create COD order from cart; body: `shippingAddress` (`fullName`, `phone`, `addressLine1`, `city`, `state`, `postalCode`). Clears cart on success. |
+| GET    | `/api/orders`     | Current user’s orders |
+| GET    | `/api/orders/:id` | Order detail (only if owned by user) |
+
+**Authorization header:** `Authorization: Bearer <token>`
 
 ---
 
-## How to Verify Everything Works
+## Frontend routes
 
-1. Start backend (`npm run server`) in `server/`
-2. Start frontend (`npm run dev`) in `client/`
-3. Open frontend in browser
-4. Open browser DevTools console
-5. You should see the product data logged from the backend request
+| Path          | Notes                              |
+| ------------- | ---------------------------------- |
+| `/`           | Home: catalog, search, categories, add to cart / wishlist |
+| `/login`      | Login                              |
+| `/register`   | Register                           |
+| `/cart`       | Protected                          |
+| `/wishlist`   | Protected                          |
+| `/checkout`   | Protected                          |
+| `/orders`     | Protected                          |
+| `/profile`    | Protected                          |
 
 ---
 
-## Tech Stack
+## Data models (summary)
 
-- **Frontend:** React, Vite, Axios, React Router
-- **Backend:** Node.js, Express, Mongoose, dotenv, cors
+- **User** — `name`, `email`, `password` (hashed), `cartItems[]`, `wishlist[]`
+- **Product** — `name`, `description`, `price`, `images[]`, `category`, `countInStock`
+- **Order** — `user`, `items[]` (snapshot name/price/qty), `subtotal`, `shippingAddress`, `paymentMethod` (default `COD`), `status` (`placed` \| `confirmed` \| `shipped` \| `delivered` \| `cancelled`)
+
+---
+
+## Tech stack
+
+- **Frontend:** React 19, Vite 8, React Router 7, `fetch`-based API client
+- **Backend:** Node.js (ES modules), Express 5, Mongoose 9, JWT, bcryptjs, cors, dotenv
 - **Database:** MongoDB
 
 ---
 
-## Current Status
+## Verify it works
 
-This repository is a starter structure for an e-commerce app. Next steps typically include:
+1. Set `server/.env` with a valid `MONGO_URI` and `JWT_SECRET`.
+2. Insert at least one **Product** document matching the schema above.
+3. Start `server` and `client` as above.
+4. Open the app, register, log in, add items to cart, place an order on `/checkout`, and confirm it under `/orders`.
 
-- Product models and CRUD APIs
-- Authentication/authorization
-- Cart and order management
-- Payment integration
-- Admin dashboard
-
+For more detail on the authentication flow, see `AUTHENTICATION_GUIDE.md` in the repo root.
