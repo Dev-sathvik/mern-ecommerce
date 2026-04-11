@@ -1,35 +1,29 @@
-import React, { useLayoutEffect, useState } from "react";
+import React, { createContext, useState, useContext, useEffect } from "react";
 import { authService } from "../services/authService";
-import { AuthContext } from "./auth-context";
 
-function readStoredAuth() {
-  const storedUser = authService.getCurrentUser();
-  const storedToken = authService.getToken();
-  if (storedUser && storedToken) {
-    return { user: storedUser, token: storedToken };
-  }
-  return { user: null, token: null };
-}
+const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
-  const [auth, setAuth] = useState(() => ({
-    user: null,
-    token: null,
-    loading: true,
-  }));
+  const [user, setUser] = useState(null);
+  const [token, setToken] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  useLayoutEffect(() => {
-    const { user, token } = readStoredAuth();
-    // Defer setState so eslint react-hooks/set-state-in-effect is satisfied; still runs before paint.
-    queueMicrotask(() => {
-      setAuth({ user, token, loading: false });
-    });
+  useEffect(() => {
+    // Check if user is already logged in
+    const storedUser = authService.getCurrentUser();
+    const storedToken = authService.getToken();
+    if (storedUser && storedToken) {
+      setUser(storedUser);
+      setToken(storedToken);
+    }
+    setLoading(false);
   }, []);
 
   const login = async (email, password) => {
     const response = await authService.login(email, password);
     if (response.success) {
-      setAuth((prev) => ({ ...prev, user: response.user, token: response.token }));
+      setUser(response.user);
+      setToken(response.token);
     }
     return response;
   };
@@ -37,25 +31,35 @@ export const AuthProvider = ({ children }) => {
   const register = async (name, email, password) => {
     const response = await authService.register(name, email, password);
     if (response.success) {
-      setAuth((prev) => ({ ...prev, user: response.user, token: response.token }));
+      setUser(response.user);
+      setToken(response.token);
     }
     return response;
   };
 
   const logout = () => {
     authService.logout();
-    setAuth((prev) => ({ ...prev, user: null, token: null }));
+    setUser(null);
+    setToken(null);
   };
 
   const value = {
-    user: auth.user,
-    token: auth.token,
-    loading: auth.loading,
+    user,
+    token,
+    loading,
     login,
     register,
     logout,
-    isAuthenticated: !!auth.token,
+    isAuthenticated: !!token,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+};
+
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error("useAuth must be used within AuthProvider");
+  }
+  return context;
 };

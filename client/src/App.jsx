@@ -9,7 +9,6 @@ import { Orders } from "./pages/Orders";
 import { Profile } from "./pages/Profile";
 import { Wishlist } from "./pages/Wishlist";
 import { Checkout } from "./pages/Checkout";
-import { ProductDetail } from "./pages/ProductDetail";
 
 function App() {
   return (
@@ -17,7 +16,6 @@ function App() {
       <AuthProvider>
         <Routes>
           <Route path="/" element={<Home />} />
-          <Route path="/products/:id" element={<ProductDetail />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route
